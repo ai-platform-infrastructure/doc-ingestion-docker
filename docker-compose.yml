@@ -1,0 +1,62 @@
+# itk-version: 3.2.1
+networks:
+  frontend:
+    external: true
+  app:
+    driver: bridge
+    internal: false
+
+services:
+  api:
+    build: 
+      dockerfile: Dockerfile
+      context: doc_ingestion_router
+      args:
+        INSTALL_DEV: "true"
+    command:
+      - "uvicorn"
+      - "app.main:app"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "8000"
+      - "--reload"
+    networks:
+      - frontend
+      - app
+    ports:
+      - "8000"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://127.0.0.1:8000/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    environment:
+      APP_NAME:  ${APP_NAME:-Document Ingestion Router}
+      API_KEY: ${API_KEY:-sk-12345678}
+      TIKA_BASE_URL: ${TIKA_BASE_URL:-http://tika:9998}
+      TIKA_USER: ${TIKA_USER:-your-tika-user-name}
+      TIKA_PASSWORD: ${TIKA_PASSWORD:-your-tika-password}
+    volumes:
+      - ./doc_ingestion_router:/app
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=frontend"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${COMPOSE_DOMAIN}`)"
+    #      HTTPS config - uncomment to enable redirect from :80 to :443
+    #      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=redirect-to-https"
+    #      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+
+  tika:
+    image: itkdev/tika:3.2.0
+    networks:
+      - app
+    healthcheck:
+      test: [ "CMD", "wget", "-O", "/dev/null", "-q", "http://127.0.0.1:9998/" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    ports:
+      - "9998"
