@@ -9,7 +9,7 @@ vars:
   DOCKER_COMPOSE: '{{ .TASK_DOCKER_COMPOSE | default "itkdev-docker-compose" }}'
   REPO_URL: 'https://github.com/ai-platform-infrastructure/doc_ingestion_router.git'
   REPO_BRANCH: 'develop'
-  VERSION: '0.0.1'
+  VERSION: '0.0.2'
   TARGET_DIR: 'doc_ingestion_router'
 
 tasks:
